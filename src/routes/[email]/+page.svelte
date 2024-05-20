@@ -1,130 +1,188 @@
-<!-- localhost:5173/coopercodes1@gmail.com -->
+<!-- localhost:5173/haphazerdous@gmail.com -->
 <script lang="ts">
-    import { page } from "$app/stores";
-    export let data;
+  import { page } from "$app/stores";
+  export let data;
 
-    let { supabase, session } = data
-    $: ({ supabase, session } = data)
-    $: email = $page.params.email;
+  let { supabase, session } = data;
+  $: ({ supabase, session } = data);
 
-    let questionTypeList: any = ["Single-Choice", "Multi-Choice", "Custom Rating", "Single-Number", "Multi-Number", "Open-End Single Text", "Open-End Text Box", "Name & Address", "Not Asked"]
-    let zeta: any = []
+  $: email = $page.params.email;
 
-    let isModalOpen = false;
-    let searchInput = "";
+  let questionTypeList: any = [
+    "Single-Choice",
+    "Multi-Choice",
+    "Custom Rating",
+    "Single-Number",
+    "Multi-Number",
+    "Open-End Single Text",
+    "Open-End Text Box",
+    "Name & Address",
+    "Not Asked",
+  ];
+  let zeta: any = []; // dummy variable for testing
 
-    // profiles in Supabase which has columns for a description, pokemon_ids, email
-    // from this page, we can use the supabase object to then save to our database (grab data)
+  var question: any = {
+    mapped_question: "Mapped Question Num",
+    questiontext: "What is your question text?",
+    choices: ["Choice A", "Choice B", "Choice C"]
+  }
+  
+  page.subscribe(async () => { // .subscribe is a callback function that triggers when the route changes
 
-   
+    // Try to grab the current account question data based on user login (haphazerdous@gmail.com)
+    const { data: questionData, error: questionError } = await supabase
+      .from("question")
+      .select("mapped_question, questiontext, choices")
+      .eq("account_email", email);
+ 
+      if (questionData === undefined && email == session?.user?.email){
+        // save questions
+      } else if (questionData != null && questionData.length > 0){
+        question = questionData[0];
+      } else {
+        console.log('No Profile');
+        question = {
+          mapped_question: "Error",
+          questiontext: "This user does not have a question text yet!",
+          choices: []
+        }
+      }
+ 
+   });
 
-    async function savePageEdits() {
-        // await saveProfile();
-        
-        isModalOpen = false;
-    }
 
-    
+  let isQuestionTypeModalOpen = false;
+  let searchInput = "";
+
+  // profiles in Supabase which has columns for a description, pokemon_ids, email
+  // from this page, we can use the supabase object to then save to our database (grab data)
+
+  async function savePageEdits() {
+    // await saveProfile();
+    isQuestionTypeModalOpen = false;
+  }
+
+  function questionTypeSelected() {
+    isQuestionTypeModalOpen = false;
+
+  }
+
 </script>
 
 <div class="hero min-h-screen bg-base-content">
-    <div class="hero-content">
-        <div class="max-w-2xl text-center">
-            <h1 class="text-white font-bold text-4xl">{email}'s Page</h1>
-            <p class="py-3 max-w-md mx-auto">placeholder</p>
-            <div class="grid grid-cols-3">
-                {#if zeta === undefined}
-                    <p>Loading...</p>
-                {:else}
-                    {#each zeta as nonsense}
-                        <div class="card bg-slate-700 m-4 shadow-lg shadow-blue-900">
-                            <div class="card-body">
-                                <div class="text-center">
-                                    <img src={nonsense.sprites.front_default} alt="nonsense" class="w-32 h-32 mx-auto" />
-                                    <h2 class="text-white text-2xl font-bold">{nonsense.name}</h2>
-                                    <p class="text-info">{nonsense.types[0].type.name}</p>
-                                </div>
-                            </div>
-                        </div>
-                    {/each}
-                {/if}
+  <div class="hero-content">
+    <div class="max-w-2xl text-center">
+      <h1 class="text-white font-bold text-4xl">{email}'s Page</h1>
+      <p class="py-3 max-w-md mx-auto">placeholder</p>
+      <div class="grid grid-cols-3">
+        {#if zeta === undefined}
+          <p>Loading...</p>
+        {:else}
+          {#each zeta as nonsense}
+            <div class="card bg-slate-700 m-4 shadow-lg shadow-blue-900">
+              <div class="card-body">
+                <div class="text-center">
+                  <img
+                    src={nonsense.sprites.front_default}
+                    alt="nonsense"
+                    class="w-32 h-32 mx-auto"
+                  />
+                  <h2 class="text-white text-2xl font-bold">{nonsense.name}</h2>
+                  <p class="text-info">{nonsense.types[0].type.name}</p>
+                </div>
+              </div>
             </div>
-            {#if email == session?.user?.email}
-                <button class="btn btn-info" on:click={() => isModalOpen = true}>Insert Question</button>
-                <dialog class="modal min-w-lg" class:modal-open={isModalOpen}>
-                    <div class="modal-box">
-                        <div class='close-container text-right'>
-                            <button class="close inline-block" on:click={() => isModalOpen = false}>X</button>
-                        </div>
-                        <h3>Insert Question</h3>
-                        <p>Here you can insert your questions that make up your survey.</p>
-                        <!-- <p class="text-white p-2">Edit your description</p>
+          {/each}
+        {/if}
+      </div>
+      {#if email == session?.user?.email}
+        <button class="btn btn-info" on:click={() => (isQuestionTypeModalOpen = true)}>Insert Question</button>
+        <dialog class="modal min-w-lg" class:modal-open={isQuestionTypeModalOpen}>
+          <div class="modal-box">
+            <div class="close-container text-right">
+              <button
+                class="close inline-block"
+                on:click={() => (isQuestionTypeModalOpen = false)}>X</button>
+            </div>
+            <h3>Insert Question</h3>
+            <p>Here you can insert your questions that make up your survey.</p>
+            <!-- <p class="text-white p-2">Edit your description</p>
                         <textarea 
                             bind:value={profile.description} 
                             class="textarea textarea-bordered textarea-lg w-full max-w-md h-[300px]"
                         /> -->
-                        <p class="text-black p-2">Select your question type.</p>
-                        <div class="grid grid-cols-3 overflow-y-scroll max-h-[600px] m-3">
-
-                            {#each questionTypeList as questionType, index} <!-- questionType are 1 indexed -->
-                                <!-- "char" -> "charmander", "charizard" -->
-                                <!-- {(console.log({ questionType }), '')} -->
-                                {#if questionType === "Single-Choice"}
-                                    <button 
-                                        class={
-                                            "card bg-slate-700 h-12 p-1 m-1 justify-center items-center enabled "
-                                            + (questionType
-                                            ? "border-2 border-blue-600"
-                                            : "")
-                                        }
-                                    >
-
-                                        <div class="text=center">
-                                            <h2 class="text-base text-white leading-4">{questionType}</h2>
-                                        </div>
-                                    </button>
-
-                                {:else}
-                                        <button 
-                                        class={
-                                            "card bg-slate-700 h-12 p-1 m-1 justify-center items-center disabled "
-                                            + (questionType
-                                            ? "border-2 border-blue-600"
-                                            : "")
-                                        }
-                                    >
-
-                                        <div class="text=center">
-                                            <h2 class="text-base text-white leading-4">{questionType}</h2>
-                                        </div>
-                                    </button>
-                                {/if}
-                            {/each}
-                        </div>
-                        <button class="btn btn-success" on:click={() => savePageEdits()}>Save Edits</button>
+            <p class="text-black p-2">Select your question type.</p>
+            <div class="grid grid-cols-3 max-h-[600px] m-3">
+              {#each questionTypeList as questionType, index}
+                <!-- questionType are 1 indexed -->
+                <!-- "char" -> "charmander", "charizard" -->
+                <!-- {(console.log({ questionType }), '')} -->
+                {#if questionType === "Single-Choice"}
+                  <button
+                    class={"card bg-slate-700 h-12 p-1 m-1 justify-center items-center enabled " +
+                      (questionType ? "border-2 border-blue-600" : "")}
+                    id="sc"
+                    on:click={() => questionTypeSelected()}
+                  >
+                    <div class="text=center">
+                      <h2 class="text-base text-white leading-4">
+                        {questionType}
+                      </h2>
                     </div>
-                </dialog>
-            {/if}
+                  </button>
+                {:else}
+                  <button
+                    class={"card bg-slate-700 h-12 p-1 m-1 justify-center items-center disabled " +
+                      (questionType ? "border-2 border-blue-600" : "")}
+                  >
+                    <div class="text=center">
+                      <h2 class="text-base text-white leading-4">
+                        {questionType}
+                      </h2>
+                    </div>
+                  </button>
+                {/if}
+              {/each}
+            </div>
+           </div>
+        </dialog>
+      {/if}
+      <div class="question-editor border-2 border-black mt-6">
+        <div class="question-editor-container">
+          <h3 class="mt-1 text-white text-xl">Singe Choice</h3>
+          <textarea name="questionText" id="qtext" placeholder="Enter your question text here..."></textarea>
+          <div class="choices-container mb-2">
+          <input type="text" class='c1' placeholder="Paste Choices" on:input={() => console.log('Choices Pasted.')}>
+          </div>
+          <button class="questionSubmit text-white border-2 border-white p-1 mt-2 mb-2 hover:bg-sky-600">Submit</button>
         </div>
+      </div>
     </div>
+  </div>
 </div>
 
-
 <style>
-    .disabled {
-        pointer-events: none;
-        background-color: grey;
-        border: black solid 1px;
-    }
-    .close{
-        display: inline-block;
-        position: relative;
-        bottom: 1.3rem;
-        left: 1rem;
-        cursor: pointer;
-        font-weight: bold;
-    }
-    .close:hover {
-        color: #b6b8bb;
-    }
+  .disabled {
+    pointer-events: none;
+    background-color: grey;
+    border: black solid 1px;
+  }
+  .close {
+    display: inline-block;
+    position: relative;
+    bottom: 1.3rem;
+    left: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .close:hover {
+    color: #b6b8bb;
+  }
+  #qtext {
+    width: 80%;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    resize: none;
+    height: 5rem;
+  }
 </style>
