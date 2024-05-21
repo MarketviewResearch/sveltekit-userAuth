@@ -1,6 +1,8 @@
 <!-- localhost:5173/haphazerdous@gmail.com -->
 <script lang="ts">
   import { page } from "$app/stores";
+  import choice from "$lib/components/choice.svelte"
+
   export let data;
 
   let { supabase, session } = data;
@@ -52,7 +54,11 @@
 
 
   let isQuestionTypeModalOpen = false;
-  let searchInput = "";
+  let showQuestionEditor = false;
+
+  function toggleQuestionEditor() {
+    showQuestionEditor = !showQuestionEditor
+  }
 
   // profiles in Supabase which has columns for a description, pokemon_ids, email
   // from this page, we can use the supabase object to then save to our database (grab data)
@@ -64,6 +70,26 @@
 
   function questionTypeSelected() {
     isQuestionTypeModalOpen = false;
+
+  }
+
+  function insertChoices(e: Event): void { // function runs when chocies pasted into choice input, reads choices and dynamically creates choice rows for each choice on clipboard
+    var choices = (e.target as HTMLInputElement).value.split('\n')
+    console.log(choices);
+    for (let i = 0; i < choices.length; i++) {
+      if (i > 0){
+        const newChoiceRow = new choice({
+          target: document.querySelector('#choices-container') as HTMLElement,
+          props: {
+            CheckBoxName: `checkCoice_${i+1}`,
+            CheckBoxID: `checkCoice_${i+1}`,
+            textAreaID: `c${i+1}`,
+            choiceText: choices[i],
+          }
+        })
+      }
+    }
+    (document.getElementById('c1')! as HTMLInputElement).value = choices[0];
 
   }
 
@@ -96,8 +122,17 @@
         {/if}
       </div>
       {#if email == session?.user?.email}
-        <button class="btn btn-info" on:click={() => (isQuestionTypeModalOpen = true)}>Insert Question</button>
-        <dialog class="modal min-w-lg" class:modal-open={isQuestionTypeModalOpen}>
+        {#if showQuestionEditor == false}
+        <button
+          class="btn btn-info"
+          on:click={() => (isQuestionTypeModalOpen = true)}
+          >Insert Question</button
+        >
+        {/if}
+        <dialog
+          class="modal min-w-lg"
+          class:modal-open={isQuestionTypeModalOpen}
+        >
           <div class="modal-box">
             <div class="close-container text-right">
               <button
@@ -123,6 +158,7 @@
                       (questionType ? "border-2 border-blue-600" : "")}
                     id="sc"
                     on:click={() => questionTypeSelected()}
+                    on:click={toggleQuestionEditor}
                   >
                     <div class="text=center">
                       <h2 class="text-base text-white leading-4">
@@ -144,19 +180,37 @@
                 {/if}
               {/each}
             </div>
-           </div>
+          </div>
         </dialog>
       {/if}
+      {#if showQuestionEditor} 
+      <button class="btn btn-info" on:click={() => (showQuestionEditor = false)}>Cancel</button>
       <div class="question-editor border-2 border-black mt-6">
         <div class="question-editor-container">
-          <h3 class="mt-1 text-white text-xl">Singe Choice</h3>
-          <textarea name="questionText" id="qtext" placeholder="Enter your question text here..."></textarea>
-          <div class="choices-container mb-2">
-          <input type="text" class='c1' placeholder="Paste Choices" on:input={() => console.log('Choices Pasted.')}>
+          <h3 class="mt-1 text-white text-xl">Single Choice</h3>
+          <textarea
+            name="questionText"
+            id="qtext"
+            placeholder="Enter your question text here..."
+          ></textarea>
+          <div class="mb-2" id="choices-container">
+            <div class="choice-row-container">
+              <input type="checkbox" name="checkCoice_1" id="checkCoice_1" />
+              <textarea
+                class="choiceText h-6 w-60 resize-none ml-5 mb-2"
+                id="c1"
+                placeholder="Paste Choices"
+                on:input={insertChoices}
+              ></textarea>
+            </div>
           </div>
-          <button class="questionSubmit text-white border-2 border-white p-1 mt-2 mb-2 hover:bg-sky-600">Submit</button>
+          <button
+            class="questionSubmit text-white border-2 border-white p-1 mt-2 mb-2 hover:bg-sky-600"
+            >Submit</button
+          >
         </div>
       </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -184,5 +238,10 @@
     margin-bottom: 1rem;
     resize: none;
     height: 5rem;
+  }
+  .choice-row-container {
+    display: flex;
+    width: 100%;
+    justify-content: center;
   }
 </style>
