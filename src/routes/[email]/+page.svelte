@@ -63,14 +63,6 @@
     showQuestionEditor = !showQuestionEditor;
   }
 
-  // profiles in Supabase which has columns for a description, pokemon_ids, email
-  // from this page, we can use the supabase object to then save to our database (grab data)
-
-  async function savePageEdits() {
-    // await saveProfile();
-    isQuestionTypeModalOpen = false;
-  }
-
   function questionTypeSelected() {
     isQuestionTypeModalOpen = false;
   }
@@ -78,7 +70,7 @@
   function insertChoices(e: Event): void {
     // function runs when chocies pasted into choice input, reads choices and dynamically creates choice rows for each choice on clipboard
     var choices = (e.target as HTMLInputElement).value.split("\n");
-    console.log(choices);
+    // console.log(choices);
     for (let i = 0; i < choices.length; i++) {
       if (i > 0) {
         const newChoiceRow = new choice({
@@ -93,6 +85,33 @@
       }
     }
     (document.getElementById("c1")! as HTMLInputElement).value = choices[0]; // set the value of the 1st choice row as the 1st item on the clipboard
+  }
+
+  let questionText = "";
+  async function saveQuestion() {
+    let choices: string[] = [];
+    const choiceNodeArray: NodeListOf<Element> =
+      document.querySelectorAll(".choiceText");
+    choiceNodeArray.forEach((choice) =>
+      choices.push((choice as HTMLInputElement).value),
+    );
+    console.log(`choices are ${choices}`);
+    // const { data: profileData, error: profileError } = await supabase.from("question").select("*").eq('account_email', email)
+
+    if (questionText != "" && choices.length != 0) {
+      console.log("fired");
+      const { data, error } = await supabase.from("question").insert({
+        account_id: session?.user?.id,
+        account_email: session?.user?.email,
+        questiontext: questionText,
+        choices: choices,
+      });
+    } else {
+      // alert
+      alert(
+        "Be sure to have both the question text and choices created before trying to submit the question.",
+      );
+    }
   }
 </script>
 
@@ -197,25 +216,30 @@
               name="questionText"
               id="qtext"
               placeholder="Enter your question text here..."
+              bind:value={questionText}
+              on:keydown={() => console.log(questionText)}
             ></textarea>
-              <div class="mb-2" id="choices-container">
-                <div class="choice-row-container mb-2">
-                  <input
-                    type="checkbox"
-                    name="checkCoice_1"
-                    class="choiceCheckbox"
-                    id="checkCoice_1"
-                  />
-                  <textarea
-                    class="choiceText h-6 w-60 resize-none ml-5 pl-1"
-                    id="c1"
-                    placeholder="Paste Choices"
-                    on:input={insertChoices}
-                  ></textarea>
-                </div>
+            <div class="mb-2" id="choices-container">
+              <div class="choice-row-container mb-2">
+                <input
+                  type="checkbox"
+                  name="checkCoice_1"
+                  class="choiceCheckbox"
+                  id="checkCoice_1"
+                />
+                <textarea
+                  class="choiceText h-6 w-60 resize-none ml-5 pl-1"
+                  id="c1"
+                  placeholder="Paste Choices"
+                  on:input={insertChoices}
+                ></textarea>
               </div>
+            </div>
             <DeleteChoicesButton />
-            <button class="questionSubmit text-white border-2 border-white p-1 mt-2 mb-2 hover:bg-sky-600">Submit</button>
+            <button
+              class="questionSubmit text-white border-2 border-white p-1 mt-2 mb-2 hover:bg-sky-600"
+              on:click={saveQuestion}>Submit</button
+            >
           </div>
         </div>
       {/if}
