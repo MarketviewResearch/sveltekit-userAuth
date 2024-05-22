@@ -5,12 +5,11 @@
   export let choiceText;
 </script>
 
-<div class="choice-row-container">
+<div class="choice-row-container mb-2">
   <input type="checkbox" name={CheckBoxName} id={CheckBoxID} />
-  <textarea
-    class="h-6 w-60 resize-none ml-5 mb-2"
-    id={textAreaID}
-  >{choiceText}</textarea>
+  <textarea class="choiceText h-6 w-60 resize-none ml-5 pl-1" id={textAreaID}
+    >{choiceText}</textarea
+  >
 </div>
 
 <style>

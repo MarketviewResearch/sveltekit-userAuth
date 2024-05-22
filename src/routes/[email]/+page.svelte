@@ -1,7 +1,8 @@
 <!-- localhost:5173/haphazerdous@gmail.com -->
 <script lang="ts">
   import { page } from "$app/stores";
-  import choice from "$lib/components/choice.svelte"
+  import choice from "$lib/components/choice.svelte";
+  import DeleteChoicesButton from "$lib/components/DeleteChoicesButton.svelte";
 
   export let data;
 
@@ -26,38 +27,40 @@
   var question: any = {
     mapped_question: "Mapped Question Num",
     questiontext: "What is your question text?",
-    choices: ["Choice A", "Choice B", "Choice C"]
-  }
-  
-  page.subscribe(async () => { // .subscribe is a callback function that triggers when the route changes
+    choices: ["Choice A", "Choice B", "Choice C"],
+  };
+
+  let wasFirstChoiceDeleted: boolean = false;
+  console.log(wasFirstChoiceDeleted);
+
+  page.subscribe(async () => {
+    // .subscribe is a callback function that triggers when the route changes
 
     // Try to grab the current account question data based on user login (haphazerdous@gmail.com)
     const { data: questionData, error: questionError } = await supabase
       .from("question")
       .select("mapped_question, questiontext, choices")
       .eq("account_email", email);
- 
-      if (questionData === undefined && email == session?.user?.email){
-        // save questions
-      } else if (questionData != null && questionData.length > 0){
-        question = questionData[0];
-      } else {
-        console.log('No Profile');
-        question = {
-          mapped_question: "Error",
-          questiontext: "This user does not have a question text yet!",
-          choices: []
-        }
-      }
- 
-   });
 
+    if (questionData === undefined && email == session?.user?.email) {
+      // save questions
+    } else if (questionData != null && questionData.length > 0) {
+      question = questionData[0];
+    } else {
+      console.log("No Profile");
+      question = {
+        mapped_question: "Error",
+        questiontext: "This user does not have a question text yet!",
+        choices: [],
+      };
+    }
+  });
 
   let isQuestionTypeModalOpen = false;
   let showQuestionEditor = false;
 
   function toggleQuestionEditor() {
-    showQuestionEditor = !showQuestionEditor
+    showQuestionEditor = !showQuestionEditor;
   }
 
   // profiles in Supabase which has columns for a description, pokemon_ids, email
@@ -70,29 +73,27 @@
 
   function questionTypeSelected() {
     isQuestionTypeModalOpen = false;
-
   }
 
-  function insertChoices(e: Event): void { // function runs when chocies pasted into choice input, reads choices and dynamically creates choice rows for each choice on clipboard
-    var choices = (e.target as HTMLInputElement).value.split('\n')
+  function insertChoices(e: Event): void {
+    // function runs when chocies pasted into choice input, reads choices and dynamically creates choice rows for each choice on clipboard
+    var choices = (e.target as HTMLInputElement).value.split("\n");
     console.log(choices);
     for (let i = 0; i < choices.length; i++) {
-      if (i > 0){
+      if (i > 0) {
         const newChoiceRow = new choice({
-          target: document.querySelector('#choices-container') as HTMLElement,
+          target: document.querySelector("#choices-container") as HTMLElement,
           props: {
-            CheckBoxName: `checkCoice_${i+1}`,
-            CheckBoxID: `checkCoice_${i+1}`,
-            textAreaID: `c${i+1}`,
+            CheckBoxName: `checkCoice_${i + 1}`,
+            CheckBoxID: `checkCoice_${i + 1}`,
+            textAreaID: `c${i + 1}`,
             choiceText: choices[i],
-          }
-        })
+          },
+        });
       }
     }
-    (document.getElementById('c1')! as HTMLInputElement).value = choices[0];
-
+    (document.getElementById("c1")! as HTMLInputElement).value = choices[0]; // set the value of the 1st choice row as the 1st item on the clipboard
   }
-
 </script>
 
 <div class="hero min-h-screen bg-base-content">
@@ -123,11 +124,11 @@
       </div>
       {#if email == session?.user?.email}
         {#if showQuestionEditor == false}
-        <button
-          class="btn btn-info"
-          on:click={() => (isQuestionTypeModalOpen = true)}
-          >Insert Question</button
-        >
+          <button
+            class="btn btn-info"
+            on:click={() => (isQuestionTypeModalOpen = true)}
+            >Insert Question</button
+          >
         {/if}
         <dialog
           class="modal min-w-lg"
@@ -137,7 +138,8 @@
             <div class="close-container text-right">
               <button
                 class="close inline-block"
-                on:click={() => (isQuestionTypeModalOpen = false)}>X</button>
+                on:click={() => (isQuestionTypeModalOpen = false)}>X</button
+              >
             </div>
             <h3>Insert Question</h3>
             <p>Here you can insert your questions that make up your survey.</p>
@@ -183,33 +185,39 @@
           </div>
         </dialog>
       {/if}
-      {#if showQuestionEditor} 
-      <button class="btn btn-info" on:click={() => (showQuestionEditor = false)}>Cancel</button>
-      <div class="question-editor border-2 border-black mt-6">
-        <div class="question-editor-container">
-          <h3 class="mt-1 text-white text-xl">Single Choice</h3>
-          <textarea
-            name="questionText"
-            id="qtext"
-            placeholder="Enter your question text here..."
-          ></textarea>
-          <div class="mb-2" id="choices-container">
-            <div class="choice-row-container">
-              <input type="checkbox" name="checkCoice_1" id="checkCoice_1" />
-              <textarea
-                class="choiceText h-6 w-60 resize-none ml-5 mb-2"
-                id="c1"
-                placeholder="Paste Choices"
-                on:input={insertChoices}
-              ></textarea>
-            </div>
+      {#if showQuestionEditor}
+        <button
+          class="btn btn-info"
+          on:click={() => (showQuestionEditor = false)}>Cancel</button
+        >
+        <div class="question-editor border-2 border-black mt-6">
+          <div class="question-editor-container">
+            <h3 class="mt-1 text-white text-xl">Single Choice</h3>
+            <textarea
+              name="questionText"
+              id="qtext"
+              placeholder="Enter your question text here..."
+            ></textarea>
+              <div class="mb-2" id="choices-container">
+                <div class="choice-row-container mb-2">
+                  <input
+                    type="checkbox"
+                    name="checkCoice_1"
+                    class="choiceCheckbox"
+                    id="checkCoice_1"
+                  />
+                  <textarea
+                    class="choiceText h-6 w-60 resize-none ml-5 pl-1"
+                    id="c1"
+                    placeholder="Paste Choices"
+                    on:input={insertChoices}
+                  ></textarea>
+                </div>
+              </div>
+            <DeleteChoicesButton />
+            <button class="questionSubmit text-white border-2 border-white p-1 mt-2 mb-2 hover:bg-sky-600">Submit</button>
           </div>
-          <button
-            class="questionSubmit text-white border-2 border-white p-1 mt-2 mb-2 hover:bg-sky-600"
-            >Submit</button
-          >
         </div>
-      </div>
       {/if}
     </div>
   </div>
